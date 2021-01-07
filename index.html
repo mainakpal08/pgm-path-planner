@@ -55,11 +55,11 @@ function getMousePos(canvas, evt) {
 		y: evt.clientY - rect.top
 	};
 }
-function getRvizPos(mousePos){
-	return{
-		x: mousePos.x * resolution + origin_offset,
-		y: (canvas.height - mousePos.y) * resolution + origin_offset
-	};
+function getRvizPoint(mousePos){
+	return new Point(
+		mousePos.x * resolution + origin_offset,
+		(canvas.height - mousePos.y) * resolution + origin_offset
+	);
 }
 
 
@@ -135,18 +135,18 @@ fr.onload = async function(e) {
 
 canvas.addEventListener('mousemove', function(evt) {
 	//let mousePos = getMousePos(canvas, evt);
-	let rvizPos = getRvizPos(getMousePos(canvas, evt));
+	let rvizPos = getRvizPoint(getMousePos(canvas, evt));
 	let message = 'Mouse position: ' + rvizPos.x + ',' + rvizPos.y;
 	log(message);
 }, false);
 
 let waypoint=[];
-canvas.addEventListener('click', function(evt) {
-	//let mousePos = getMousePos(canvas, evt);
-	let rvizPos = getRvizPos(getMousePos(canvas, evt));
-	let message = "Clicked!";
+canvas.addEventListener('mousedown', function(evt) {
+	let mousePos = getMousePos(canvas, evt);
+	let rvizPoint = getRvizPoint(mousePos);
 	
-	log(message);
+	waypoint.push(new Pose(rvizPoint));
+	log(waypoint);
 }, false);
 function updateCanvas() {
 	//10:/n 35:#

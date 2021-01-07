@@ -1,7 +1,7 @@
 'use strict'
 class Point{
 	x=0;y=0;z=0;
-	constructor(x, y, z) {
+	constructor(x=0, y=0, z=0) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -9,7 +9,7 @@ class Point{
 }
 class Quartenion{
 	x=0;y=0;z=0;w=0;
-	constructor(x, y, z, w) {
+	constructor(x=0, y=0, z=0, w=0) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -19,7 +19,7 @@ class Quartenion{
 class Pose{
 	position=new Point();
 	orientation=new Quartenion();
-	constructor(position, orientation) {
+	constructor(position=new Point(), orientation=new Quartenion()) {
 		this.position = position;
 		this.orientation = orientation;
 	}
