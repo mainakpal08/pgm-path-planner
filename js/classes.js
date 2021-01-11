@@ -1,3 +1,6 @@
+//This file contains strictly data structures and methods only
+//For UI handlers see main.js
+
 'use strict'
 //ROS message class
 class Point{
@@ -6,6 +9,13 @@ class Point{
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+	
+	static toRvizPoint(point){
+		let rvizPoint = new Point();
+		rvizPoint.x = point.x * resolution + origin_offset;
+		rvizPoint.y = (canvas.height - point.y) * resolution + origin_offset;
+		return rvizPoint;
 	}
 }
 class Quartenion{
@@ -35,6 +45,16 @@ class Waypoints{
 	}
 	push(pose){
 		this.waypoints.push(pose);
+	}
+	exportToRvizWaypoints(){
+		let rvizWaypoints = [];
+		for (let i=0;i<this.waypoints.length;i++){
+			let pose = new Pose();
+			pose.position = Point.toRvizPoint(this.waypoints[i].position);
+			pose.orientation = this.waypoints[i].orientation;
+			rvizWaypoints[i] = pose;
+		}
+		return rvizWaypoints;
 	}
 	draw(){
 		//draw path
