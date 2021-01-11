@@ -1,4 +1,12 @@
 <html>
+<style>
+div.fixed{
+	position: fixed;
+	bottom: 0;
+	right: 0;
+}
+</style>
+<body>
 <div>
 	<input type="file" id="input">
 </div>
@@ -6,7 +14,8 @@
 	<input type="text" id="output">
 </div>
 <canvas id="canvas" width="150" height="150"></canvas>
-
+<div class="fixed">Waypoints: </div>
+</body>
 <script src="js/classes.js"></script>
 <script>
 'use strict'
@@ -140,7 +149,7 @@ canvas.addEventListener('mousemove', function(evt) {
 	//let mousePos = getMousePos(canvas, evt);
 	let rvizPos = getRvizPoint(getMousePos(canvas, evt));
 	let message = "(" + rvizPos.x + ", " + rvizPos.y + ")";
-	log(message);
+	//log(message);
 }, false);
 
 let isMouseDown=false;

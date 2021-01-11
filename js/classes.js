@@ -29,7 +29,7 @@ class Pose{
 //default waypoints are saved in canvas coordinates
 class Waypoints{
 	waypoints = [];
-	radius = 2;
+	radius = 5;
 	constructor(waypoints=[]) {
 		this.waypoints = waypoints;
 	}
@@ -38,6 +38,7 @@ class Waypoints{
 	}
 	draw(){
 		//draw path
+		ctx.fillStyle = "#000000";
 		ctx.beginPath();
 		for (let i=0;i<this.waypoints.length;i++){
 			ctx.lineTo(this.waypoints[i].position.x,this.waypoints[i].position.y);
@@ -54,5 +55,12 @@ class Waypoints{
 				this.radius, 0, Math.PI * 2, true);
 		}
 		ctx.fill();
+		
+		//draw text
+		ctx.font = "8px serif";
+		ctx.fillStyle = "#FFFFFF";
+		for (let i=0;i<this.waypoints.length;i++){
+			ctx.fillText(i, this.waypoints[i].position.x-4, this.waypoints[i].position.y+3);
+		}
 	}
 }
