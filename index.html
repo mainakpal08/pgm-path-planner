@@ -10,8 +10,9 @@
 	top: 0;
 	right: 0;
 }
-ul{
+#point_list{
 	list-style-type: none;
+	text-align: right;
 }
 li{
 	float: left;
@@ -23,7 +24,8 @@ li{
 <div><input type="text" id="output"></div>
 <canvas id="canvas" width="150" height="150"></canvas>
 
-<div id="fixed_point_list">Waypoints: 
+<div id="fixed_point_list">
+Waypoints:
 <ul id="point_list"></ul>
 <button type="button" onclick="exportSavedWaypoints()">Export</button>
 </div>

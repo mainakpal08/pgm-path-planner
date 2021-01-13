@@ -49,10 +49,16 @@ function exportSavedWaypoints(){
 
 function updateSavedWaypointListUi(){
 	let waypoints = savedWaypoints.waypoints;
+	const point_list = document.getElementById("point_list");
 	for (let i=0;i<waypoints.length;i++){
 		let li= document.createElement("li");
 		li.appendChild(document.createTextNode(i));
-		document.getElementById("point_list").appendChild(li);
+		if (i>=point_list.childElementCount){
+			point_list.appendChild(li);
+		}
+		else{
+			point_list.replaceChild(li,point_list.childNodes[i]);
+		}
 	}
 }
 
