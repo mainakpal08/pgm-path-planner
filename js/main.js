@@ -165,10 +165,17 @@ canvas.addEventListener('mousedown', function(evt) {
 }, false);
 canvas.addEventListener('mouseup', function(evt) {
 	if (isMouseDown && imageData!=null){
-		ctx.putImageData(imageData, 0, 0);
-		savedWaypoints.push(new Pose(mousePos));
-		savedWaypoints.draw();
-		updateSavedWaypointListUi();
+		
+		let hits=savedWaypoints.hit(mousePos);
+		if (hits.size>0){
+			log(hits);
+		}
+		else{
+			ctx.putImageData(imageData, 0, 0);
+			savedWaypoints.push(new Pose(mousePos));
+			savedWaypoints.draw();
+			updateSavedWaypointListUi();
+		}
 	}
 	isMouseDown=false;
 }, false);

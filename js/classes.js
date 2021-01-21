@@ -56,6 +56,17 @@ class Waypoints{
 		}
 		return rvizWaypoints;
 	}
+	hit(mousePos){
+		let hits = new Set();
+		//foreach waypoint, check if mouse pointer is in bounds
+		for (let i=0;i<this.waypoints.length;i++){
+			if (Math.sqrt(Math.pow(mousePos.x-this.waypoints[i].position.x,2))<this.radius && 
+				Math.sqrt(Math.pow(mousePos.y-this.waypoints[i].position.y,2))<this.radius){
+				hits.add(i);	
+			}
+		}
+		return hits;
+	}
 	draw(){
 		//draw path
 		ctx.fillStyle = "#000000";
