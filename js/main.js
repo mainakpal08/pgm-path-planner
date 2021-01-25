@@ -61,6 +61,7 @@ function exportSavedWaypoints(){
 function deleteSelectedWaypoint(){
 	if (selectedWaypointIndex.current!=null){
 		savedWaypoints.removeWaypoint(selectedWaypointIndex.current);
+		updateUi();
 	}
 }
 
@@ -81,6 +82,13 @@ function updateSavedWaypointListUi(){
 
 function updateSelectedWaypointUi(){
 	document.getElementById("property_id").innerHTML=selectedWaypointIndex.current;
+}
+
+function updateUi(){
+	updateSavedWaypointListUi();
+	updateSelectedWaypointUi();
+	ctx.putImageData(imageData, 0, 0);
+	savedWaypoints.draw();
 }
 
 //-- pgm file data--//
@@ -179,6 +187,8 @@ canvas.addEventListener('mousemove', function(evt) {
 }, false);
 
 let isMouseDown=false;
+let addWaypointFlag=false;
+let translateWaypointFlag=false;
 
 canvas.addEventListener('mousedown', function(evt) {
 	isMouseDown=true;
@@ -188,21 +198,39 @@ canvas.addEventListener('mousedown', function(evt) {
 	if (hits.length>0){
 		log(hits);
 		selectedWaypointIndex.current=hits[0];
+		//start timer to check hold time
 	}
-	else selectedWaypointIndex.current=null;
+	else{ 
+		if (selectedWaypointIndex.current!=null){
+			selectedWaypointIndex.current=null;
+		}
+		else addWaypointFlag=true;
+	}
 	
 }, false);
 canvas.addEventListener('mouseup', function(evt) {
 	if (isMouseDown && imageData!=null){
-		if (selectedWaypointIndex.current==null){
-			ctx.putImageData(imageData, 0, 0);
+		if (addWaypointFlag){
 			savedWaypoints.push(new Pose(mousePos));
-			savedWaypoints.draw();
-			updateSavedWaypointListUi();
+			updateUi();
+			addWaypointFlag=false;
+		}
+		else if (translateWaypointFlag){
+			
 		}
 	}
 	isMouseDown=false;
 }, false);
+
+let holdTime=0;
+async function checkMouseHold(){
+	while(holdTime<600){
+		if (!isMouseDown) return;
+		await sleep(2);
+		holdTime+=2;
+	}
+	//success
+}
 
 function updateCanvas() {
 	//10:/n 35:#
