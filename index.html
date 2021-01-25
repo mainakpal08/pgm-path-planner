@@ -30,7 +30,10 @@ Waypoints:
 <button type="button" onclick="exportSavedWaypoints()">Export</button>
 </div>
 
-<div id="fixed_properties">Currently selected:</div>
+<div id="fixed_properties">Currently selected: <span id="property_id">0</span>
+<div><button type="button" onclick="editSelectedWaypoint()">Edit</button></div>
+<div><button type="button" onclick="deleteSelectedWaypoint()">Delete</button></div>
+</div>
 
 </body>
 <script src="js/classes.js"></script>

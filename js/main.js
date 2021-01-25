@@ -12,6 +12,17 @@ const resolution = 0.05;
 //runtime variables and output
 let mousePos;
 let savedWaypoints = new Waypoints();
+// let selectedWaypointIndex;
+const selectedWaypointIndex={
+	set current(index){
+		this._index=index;
+		updateSelectedWaypointUi();
+	}, 
+	get current(){
+		return this._index;
+	},
+	_index: null
+};
 
 /*/
 //SAMPLE PGM FILE FORMAT//
@@ -47,6 +58,12 @@ function exportSavedWaypoints(){
 	log(JSON.stringify(savedWaypoints.exportToRvizWaypoints()));
 }
 
+function deleteSelectedWaypoint(){
+	if (selectedWaypointIndex.current!=null){
+		savedWaypoints.removeWaypoint(selectedWaypointIndex.current);
+	}
+}
+
 function updateSavedWaypointListUi(){
 	let waypoints = savedWaypoints.waypoints;
 	const point_list = document.getElementById("point_list");
@@ -60,6 +77,10 @@ function updateSavedWaypointListUi(){
 			point_list.replaceChild(li,point_list.childNodes[i]);
 		}
 	}
+}
+
+function updateSelectedWaypointUi(){
+	document.getElementById("property_id").innerHTML=selectedWaypointIndex.current;
 }
 
 //-- pgm file data--//
@@ -162,15 +183,18 @@ let isMouseDown=false;
 canvas.addEventListener('mousedown', function(evt) {
 	isMouseDown=true;
 	let rvizPoint = getRvizPoint(mousePos);
+	
+	let hits=savedWaypoints.hit(mousePos);
+	if (hits.length>0){
+		log(hits);
+		selectedWaypointIndex.current=hits[0];
+	}
+	else selectedWaypointIndex.current=null;
+	
 }, false);
 canvas.addEventListener('mouseup', function(evt) {
 	if (isMouseDown && imageData!=null){
-		
-		let hits=savedWaypoints.hit(mousePos);
-		if (hits.size>0){
-			log(hits);
-		}
-		else{
+		if (selectedWaypointIndex.current==null){
 			ctx.putImageData(imageData, 0, 0);
 			savedWaypoints.push(new Pose(mousePos));
 			savedWaypoints.draw();

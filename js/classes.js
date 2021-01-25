@@ -46,6 +46,9 @@ class Waypoints{
 	push(pose){
 		this.waypoints.push(pose);
 	}
+	removeWaypoint(index){
+		this.waypoints.splice(index,1);
+	}
 	exportToRvizWaypoints(){
 		let rvizWaypoints = [];
 		for (let i=0;i<this.waypoints.length;i++){
@@ -57,12 +60,12 @@ class Waypoints{
 		return rvizWaypoints;
 	}
 	hit(mousePos){
-		let hits = new Set();
+		let hits = [];
 		//foreach waypoint, check if mouse pointer is in bounds
 		for (let i=0;i<this.waypoints.length;i++){
 			if (Math.sqrt(Math.pow(mousePos.x-this.waypoints[i].position.x,2))<this.radius && 
 				Math.sqrt(Math.pow(mousePos.y-this.waypoints[i].position.y,2))<this.radius){
-				hits.add(i);	
+				hits.push(i);	
 			}
 		}
 		return hits;
