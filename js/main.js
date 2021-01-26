@@ -61,7 +61,7 @@ function exportSavedWaypoints(){
 function deleteSelectedWaypoint(){
 	if (selectedWaypointIndex.current!=null){
 		savedWaypoints.removeWaypoint(selectedWaypointIndex.current);
-		updateUi();
+		updateScene();
 	}
 }
 
@@ -84,7 +84,7 @@ function updateSelectedWaypointUi(){
 	document.getElementById("property_id").innerHTML=selectedWaypointIndex.current;
 }
 
-function updateUi(){
+function updateScene(){
 	updateSavedWaypointListUi();
 	updateSelectedWaypointUi();
 	ctx.putImageData(imageData, 0, 0);
@@ -181,8 +181,13 @@ function getRvizPoint(mousePos){
 //---------------------*/
 canvas.addEventListener('mousemove', function(evt) {
 	mousePos = getMousePos(canvas, evt);
-	let rvizPos = getRvizPoint(getMousePos(canvas, evt));
+	let rvizPos = getRvizPoint(mousePos);
 	let message = "(" + rvizPos.x + ", " + rvizPos.y + ")";
+	
+	if (translateWaypointFlag){
+		savedWaypoints.setWaypointPosition(selectedWaypointIndex.current,mousePos.x,mousePos.y);
+		updateScene();
+	}
 	//log(message);
 }, false);
 
@@ -198,6 +203,7 @@ canvas.addEventListener('mousedown', function(evt) {
 	if (hits.length>0){
 		log(hits);
 		selectedWaypointIndex.current=hits[0];
+		checkMouseHold();
 		//start timer to check hold time
 	}
 	else{ 
@@ -212,24 +218,34 @@ canvas.addEventListener('mouseup', function(evt) {
 	if (isMouseDown && imageData!=null){
 		if (addWaypointFlag){
 			savedWaypoints.push(new Pose(mousePos));
-			updateUi();
+			updateScene();
 			addWaypointFlag=false;
 		}
 		else if (translateWaypointFlag){
-			
+			translateWaypointFlag=false;
 		}
 	}
 	isMouseDown=false;
 }, false);
 
 let holdTime=0;
+const editTriggerTime=500; //hold mouse down for --ms to trigger
 async function checkMouseHold(){
-	while(holdTime<600){
-		if (!isMouseDown) return;
-		await sleep(2);
-		holdTime+=2;
-	}
+	translateWaypointFlag=false;
+	log("timer started");
+	holdTime=0;
+	while(holdTime<editTriggerTime){
+		if (!isMouseDown){
+			log("timer ended prematurely");
+			return;
+		}
+		await sleep(5);
+		holdTime+=5;
+	} 
+	
 	//success
+	log("flag activated");
+	translateWaypointFlag=true;
 }
 
 function updateCanvas() {

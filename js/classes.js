@@ -18,7 +18,7 @@ class Point{
 		return rvizPoint;
 	}
 }
-class Quartenion{
+class Quatenion{
 	x=0;y=0;z=0;w=0;
 	constructor(x=0, y=0, z=0, w=1) {
 		this.x = x;
@@ -29,8 +29,8 @@ class Quartenion{
 }
 class Pose{
 	position=new Point();
-	orientation=new Quartenion();
-	constructor(position=new Point(), orientation=new Quartenion()) {
+	orientation=new Quatenion();
+	constructor(position=new Point(), orientation=new Quatenion()) {
 		this.position = position;
 		this.orientation = orientation;
 	}
@@ -45,6 +45,13 @@ class Waypoints{
 	}
 	push(pose){
 		this.waypoints.push(pose);
+	}
+	setWaypointPosition(index, x, y){
+		this.waypoints[index].position.x=x;
+		this.waypoints[index].position.y=y;
+	}
+	setWaypointOrientation(index, quaternion){
+		
 	}
 	removeWaypoint(index){
 		this.waypoints.splice(index,1);
