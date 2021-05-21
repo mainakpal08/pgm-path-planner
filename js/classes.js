@@ -13,15 +13,15 @@ class Point{
 	
 	static toRvizPoint(point){
 		let rvizPoint = new Point();
-		rvizPoint.x = point.x * resolution + origin_offset;
-		rvizPoint.y = (canvas.height - point.y) * resolution + origin_offset;
+		rvizPoint.x = point.x * resolution + origin_offset_x;
+		rvizPoint.y = (canvas.height - point.y) * resolution + origin_offset_y;
 		return rvizPoint;
 	}
 
 	static toLocalPoint(point){
 		let localPoint = new Point();
-		localPoint.x = (point.x - origin_offset) / resolution;
-		localPoint.y = canvas.height - (point.y - origin_offset) / resolution ;
+		localPoint.x = (point.x - origin_offset_x) / resolution;
+		localPoint.y = canvas.height - (point.y - origin_offset_y) / resolution ;
 		return localPoint;
 	}
 }

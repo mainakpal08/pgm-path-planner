@@ -6,7 +6,8 @@ const output = document.getElementById('output');
 const ctx = canvas.getContext('2d');
 
 //rviz yaml params (to retrieve from file)
-const origin_offset = -100;
+const origin_offset_x = -90.830627;
+const origin_offset_y = -60.027795;
 const resolution = 0.05;
 
 //runtime variables and output
@@ -171,8 +172,8 @@ function getMousePos(canvas, evt) {
 }
 function getRvizPoint(mousePos){
 	return new Point(
-		mousePos.x * resolution + origin_offset,
-		(canvas.height - mousePos.y) * resolution + origin_offset
+		mousePos.x * resolution + origin_offset_x,
+		(canvas.height - mousePos.y) * resolution + origin_offset_y
 	);
 }
 
@@ -255,34 +256,33 @@ function updateCanvas() {
 document.getElementById("input").addEventListener("change", updateCanvas, false);
 
 let importedPoints = [
-	[1.85707,-0.300881],
-	[-6.92133,1.83349],
-	[-16.4208,2.76788],
-	[-21.56,5.81582],
-	[-31.0066,7.58389],
-	[-34.4651,11.6644],
-	[-35.5559,12.1573],
-	[-36.9586,12.2339],
-	[-38.5520,13.0819],
-	[-39.9269,13.5731],
-	[-42.6538,17.1189],
-	[-45.7317,21.2749],
-	[-37.7605,29.6636],
-	[-30.8303,35.9869],
-	[-25.5962,36.8336],
-	[-32.6752,34.2207],
-	[-41.9484,26.0619],
-	[-45.3636,21.7874],
-	[-44.589,19.372],
-	[-39.9495,13.3718],
-	[-35.2964,12.4818],
-	[-31.0742,7.55937],
-	[-24.312,6.65829],
-	[-19.8627,3.78252],
-	[-15.9625,3.21333],
-	[-7.6247,1.9927],
-	[-0.549386,1.27611]
-];
+	[2.83942,-0.735024],
+	[-1.54533,-16.8608],
+	[0.913047,-18.1805],
+	[-5.60833,-26.4828],
+	[-7.41272,-28.2688],
+	[-10.9917,-28.2314],
+	[-26.5198,-33.9047],
+	[-38.6329,-33.8427],
+	[-54.8156,-27.04],
+	[-64.4659,-16.8349],
+	[-68.6536,0.396617],
+	[-68.500,9.97778],
+	[-64.8986,20.58784],
+	[-65.4986,23.811],
+	[-56.3084,33.6803],
+	[-48.3608,38.3622],
+	[-36.7603,41.4135],
+	[-23.2543,40.4517],
+	[-10.4337,34.8497],
+	[-1.93848,26.4883],
+	[4.73231,13.8311],
+	[6.02015,10.8273],
+	[6.65513,7.85316],
+	[7.0463,3.98162],
+	[7.07469,0.707953]
+]
+
 
 function start(){
 	for (let i=0;i<importedPoints.length;i++){
