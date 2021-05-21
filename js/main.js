@@ -6,7 +6,7 @@ const output = document.getElementById('output');
 const ctx = canvas.getContext('2d');
 
 //rviz yaml params (to retrieve from file)
-const origin_offset = -51.224998;
+const origin_offset = -100;
 const resolution = 0.05;
 
 //runtime variables and output
@@ -253,3 +253,43 @@ function updateCanvas() {
 	fr.readAsArrayBuffer(this.files[0]);
 }
 document.getElementById("input").addEventListener("change", updateCanvas, false);
+
+let importedPoints = [
+	[1.85707,-0.300881],
+	[-6.92133,1.83349],
+	[-16.4208,2.76788],
+	[-21.56,5.81582],
+	[-31.0066,7.58389],
+	[-34.4651,11.6644],
+	[-35.5559,12.1573],
+	[-36.9586,12.2339],
+	[-38.5520,13.0819],
+	[-39.9269,13.5731],
+	[-42.6538,17.1189],
+	[-45.7317,21.2749],
+	[-37.7605,29.6636],
+	[-30.8303,35.9869],
+	[-25.5962,36.8336],
+	[-32.6752,34.2207],
+	[-41.9484,26.0619],
+	[-45.3636,21.7874],
+	[-44.589,19.372],
+	[-39.9495,13.3718],
+	[-35.2964,12.4818],
+	[-31.0742,7.55937],
+	[-24.312,6.65829],
+	[-19.8627,3.78252],
+	[-15.9625,3.21333],
+	[-7.6247,1.9927],
+	[-0.549386,1.27611]
+];
+
+function start(){
+	for (let i=0;i<importedPoints.length;i++){
+		let p = new Pose(new Point(importedPoints[i][0],importedPoints[i][1]));
+		log(p);
+		savedWaypoints.pushRvizPose(p);
+	}
+	updateScene();
+}
+

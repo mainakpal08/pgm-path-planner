@@ -17,6 +17,13 @@ class Point{
 		rvizPoint.y = (canvas.height - point.y) * resolution + origin_offset;
 		return rvizPoint;
 	}
+
+	static toLocalPoint(point){
+		let localPoint = new Point();
+		localPoint.x = (point.x - origin_offset) / resolution;
+		localPoint.y = canvas.height - (point.y - origin_offset) / resolution ;
+		return localPoint;
+	}
 }
 class Quatenion{
 	x=0;y=0;z=0;w=0;
@@ -44,6 +51,10 @@ class Waypoints{
 		this.waypoints = waypoints;
 	}
 	push(pose){
+		this.waypoints.push(pose);
+	}
+	pushRvizPose(pose){
+		pose.position = Point.toLocalPoint(pose.position);
 		this.waypoints.push(pose);
 	}
 	setWaypointPosition(index, x, y){
