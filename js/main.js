@@ -8,8 +8,8 @@ const output = document.getElementById('output');
 const ctx = canvas.getContext('2d');
 
 // Rviz yaml params (to retrieve from file)
-const origin_offset_x = -90.830627;
-const origin_offset_y = -60.027795;
+const origin_offset_x = -9.399999999999991;
+const origin_offset_y = -5.6;
 const resolution = 0.05;
 
 // Runtime variables and output
@@ -31,15 +31,29 @@ function sleep(ms) {
 }
 
 function exportSavedWaypoints() {
-    log(JSON.stringify(savedWaypoints.exportToRvizWaypoints()));
+    let exportedData = savedWaypoints.exportToRvizWaypoints();
+    log(JSON.stringify(exportedData));
 }
+
 
 function deleteSelectedWaypoint() {
     if (selectedWaypointIndex.current != null) {
         savedWaypoints.removeWaypoint(selectedWaypointIndex.current);
+
+        // Update the selected waypoint index
+        if (selectedWaypointIndex.current >= savedWaypoints.waypoints.length) {
+            selectedWaypointIndex.current = savedWaypoints.waypoints.length - 1;
+        }
+
+        // If there are no waypoints left, set the selected index to null
+        if (savedWaypoints.waypoints.length === 0) {
+            selectedWaypointIndex.current = null;
+        }
+
         updateScene();
     }
 }
+
 
 function updateSavedWaypointListUi() {
     let waypoints = savedWaypoints.waypoints;
@@ -48,9 +62,16 @@ function updateSavedWaypointListUi() {
     for (let i = 0; i < waypoints.length; i++) {
         let li = document.createElement("li");
         li.appendChild(document.createTextNode(i));
+        li.setAttribute("onclick", `selectWaypoint(${i})`);
         point_list.appendChild(li);
     }
 }
+
+function selectWaypoint(index) {
+    selectedWaypointIndex.current = index;
+    updateSelectedWaypointUi();
+}
+
 
 function updateSelectedWaypointUi() {
     document.getElementById("property_id").innerHTML = selectedWaypointIndex.current;
@@ -133,17 +154,54 @@ function getMousePos(canvas, evt) {
     };
 }
 
+// Define the transformation matrix A and translation vector t
+const A = [
+    [0.9964, -0.0003],
+    [0.0007, 0.9986]
+];
+const t = [3.0478, 6.9709];
+
+// Function to calculate the inverse of a 2x2 matrix
+function inverseMatrix(matrix) {
+    const determinant = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    return [
+        [matrix[1][1] / determinant, -matrix[0][1] / determinant],
+        [-matrix[1][0] / determinant, matrix[0][0] / determinant]
+    ];
+}
+
+// Calculate the inverse of A
+const A_inv = inverseMatrix(A);
+
+// Function to perform matrix-vector multiplication
+function multiplyMatrixVector(matrix, vector) {
+    return [
+        matrix[0][0] * vector[0] + matrix[0][1] * vector[1],
+        matrix[1][0] * vector[0] + matrix[1][1] * vector[1]
+    ];
+}
+
+// Function to transform back to the original coordinates
+function transformedToOriginal(x, y) {
+    const p_transformed = [x, y];
+    const p_diff = [p_transformed[0] - t[0], p_transformed[1] - t[1]];
+    const p_original = multiplyMatrixVector(A_inv, p_diff);
+    return p_original;
+}
+
+// Adapted getRvizPoint function to return original coordinates
 function getRvizPoint(mousePos) {
-    return new Point(
-        mousePos.x * resolution + origin_offset_x,
-        (canvas.height - mousePos.y) * resolution + origin_offset_y
-    );
+    const x_transformed = mousePos.x * resolution + origin_offset_x;
+    const y_transformed = (canvas.height - mousePos.y) * resolution + origin_offset_y;
+    const [x_original, y_original] = transformedToOriginal(x_transformed, y_transformed);
+    return new Point(x_original, y_original);
 }
 
 canvas.addEventListener('mousemove', debounce(function(evt) {
     mousePos = getMousePos(canvas, evt);
     let rvizPos = getRvizPoint(mousePos);
     let message = "(" + rvizPos.x + ", " + rvizPos.y + ")";
+	//log(message);
 
     if (translateWaypointFlag) {
         savedWaypoints.setWaypointPosition(selectedWaypointIndex.current, mousePos.x, mousePos.y);
@@ -221,31 +279,6 @@ function updateCanvas() {
 document.getElementById("input").addEventListener("change", updateCanvas, false);
 
 let importedPoints = [
-    [2.83942, -0.735024],
-    [-1.54533, -16.8608],
-    [0.913047, -18.1805],
-    [-5.60833, -26.4828],
-    [-7.41272, -28.2688],
-    [-10.9917, -28.2314],
-    [-26.5198, -33.9047],
-    [-38.6329, -33.8427],
-    [-54.8156, -27.04],
-    [-64.4659, -16.8349],
-    [-68.6536, 0.396617],
-    [-68.500, 9.97778],
-    [-64.8986, 20.58784],
-    [-65.4986, 23.811],
-    [-56.3084, 33.6803],
-    [-48.3608, 38.3622],
-    [-36.7603, 41.4135],
-    [-23.2543, 40.4517],
-    [-10.4337, 34.8497],
-    [-1.93848, 26.4883],
-    [4.73231, 13.8311],
-    [6.02015, 10.8273],
-    [6.65513, 7.85316],
-    [7.0463, 3.98162],
-    [7.07469, 0.707953]
 ];
 
 function start() {
