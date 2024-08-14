@@ -8,9 +8,9 @@ const output = document.getElementById('output');
 const ctx = canvas.getContext('2d');
 
 // Rviz yaml params (to retrieve from file)
-const origin_offset_x = -9.399999999999991;
-const origin_offset_y = -5.6;
-const resolution = 0.05;
+let origin_offset_x = 0; //-9.399999999999991;
+let origin_offset_y = 0; //-5.6;
+let resolution = 0; //0.05;
 
 // Runtime variables and output
 let mousePos;
@@ -26,15 +26,67 @@ const selectedWaypointIndex = {
     _index: null
 };
 
+// Variables for cropping
+let croppingMode = false;
+let cropping = false;
+let cropStartX, cropStartY, cropEndX, cropEndY;
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function exportSavedWaypoints() {
-    let exportedData = savedWaypoints.exportToRvizWaypoints();
-    log(JSON.stringify(exportedData));
+// Function to parse the uploaded YAML file
+function loadYamlFile(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const yamlText = event.target.result;
+            try {
+                const yamlData = jsyaml.load(yamlText);
+
+                // Extracting values from the YAML
+                origin_offset_x = yamlData.origin[0];
+                origin_offset_y = yamlData.origin[1];
+                resolution = yamlData.resolution;
+
+                console.log(`Loaded YAML: origin_offset_x = ${origin_offset_x}, origin_offset_y = ${origin_offset_y}, resolution = ${resolution}`);
+            } catch (e) {
+                console.error("Error parsing YAML file:", e);
+            }
+        };
+        reader.readAsText(file);
+    }
 }
 
+// Attach event listener for the YAML file input
+document.getElementById("yamlInput").addEventListener("change", loadYamlFile, false);
+
+
+function exportSavedWaypoints() {
+    let exportedData = savedWaypoints.exportToRvizWaypoints();
+
+    // Create the YAML content
+    let yamlContent = jsyaml.dump(exportedData);
+    log(yamlContent)
+
+    // Create a blob of the YAML content
+    let blob = new Blob([yamlContent], { type: 'text/yaml' });
+    let url = URL.createObjectURL(blob);
+
+    // Create a link element and trigger the download
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'wp.yaml';
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 0);
+}
 
 function deleteSelectedWaypoint() {
     if (selectedWaypointIndex.current != null) {
@@ -54,7 +106,6 @@ function deleteSelectedWaypoint() {
     }
 }
 
-
 function updateSavedWaypointListUi() {
     let waypoints = savedWaypoints.waypoints;
     const point_list = document.getElementById("point_list");
@@ -72,7 +123,6 @@ function selectWaypoint(index) {
     updateSelectedWaypointUi();
 }
 
-
 function updateSelectedWaypointUi() {
     document.getElementById("property_id").innerHTML = selectedWaypointIndex.current;
 }
@@ -85,6 +135,13 @@ function updateScene() {
         ctx.putImageData(imageData, 0, 0);
     }
     savedWaypoints.draw();
+
+    // Draw cropping rectangle if cropping mode is active
+    if (cropping) {
+        ctx.strokeStyle = "#FF0000"; // Red border for the crop rectangle
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cropStartX, cropStartY, cropEndX - cropStartX, cropEndY - cropStartY);
+    }
 }
 
 //-- pgm file data--//
@@ -92,6 +149,7 @@ let fileType = "";
 let hv = "";
 let maxWhiteVal = "";
 let imageData;
+let croppedData;
 //------------------//
 let fr = new FileReader();
 fr.onload = async function(e) {
@@ -154,105 +212,126 @@ function getMousePos(canvas, evt) {
     };
 }
 
-// Define the transformation matrix A and translation vector t
-const A = [
-    [0.9964, -0.0003],
-    [0.0007, 0.9986]
-];
-const t = [3.0478, 6.9709];
+// Define the transformation matrix and translation vector
+// const A = [
+//     [0.9964, -0.0003],
+//     [0.0007, 0.9986]
+// ];
+// const t = [3.0478, 6.9709];
 
-// Function to calculate the inverse of a 2x2 matrix
-function inverseMatrix(matrix) {
-    const determinant = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-    return [
-        [matrix[1][1] / determinant, -matrix[0][1] / determinant],
-        [-matrix[1][0] / determinant, matrix[0][0] / determinant]
-    ];
-}
+// // Function to calculate the inverse of a 2x2 matrix
+// function inverseMatrix(matrix) {
+//     const determinant = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+//     return [
+//         [matrix[1][1] / determinant, -matrix[0][1] / determinant],
+//         [-matrix[1][0] / determinant, matrix[0][0] / determinant]
+//     ];
+// }
 
-// Calculate the inverse of A
-const A_inv = inverseMatrix(A);
+// // Calculate the inverse of A
+// const A_inv = inverseMatrix(A);
 
-// Function to perform matrix-vector multiplication
-function multiplyMatrixVector(matrix, vector) {
-    return [
-        matrix[0][0] * vector[0] + matrix[0][1] * vector[1],
-        matrix[1][0] * vector[0] + matrix[1][1] * vector[1]
-    ];
-}
+// // Function to perform matrix-vector multiplication
+// function multiplyMatrixVector(matrix, vector) {
+//     return [
+//         matrix[0][0] * vector[0] + matrix[0][1] * vector[1],
+//         matrix[1][0] * vector[0] + matrix[1][1] * vector[1]
+//     ];
+// }
 
-// Function to transform back to the original coordinates
-function transformedToOriginal(x, y) {
-    const p_transformed = [x, y];
-    const p_diff = [p_transformed[0] - t[0], p_transformed[1] - t[1]];
-    const p_original = multiplyMatrixVector(A_inv, p_diff);
-    return p_original;
-}
+// // Function to transform back to the original coordinates
+// function transformedToOriginal(x, y) {
+//     const p_transformed = [x, y];
+//     const p_diff = [p_transformed[0] - t[0], p_transformed[1] - t[1]];
+//     const p_original = multiplyMatrixVector(A_inv, p_diff);
+//     return p_original;
+// }
 
 // Adapted getRvizPoint function to return original coordinates
-function getRvizPoint(mousePos) {
-    const x_transformed = mousePos.x * resolution + origin_offset_x;
-    const y_transformed = (canvas.height - mousePos.y) * resolution + origin_offset_y;
-    const [x_original, y_original] = transformedToOriginal(x_transformed, y_transformed);
-    return new Point(x_original, y_original);
-}
+// function getRvizPoint(mousePos) {
+//     const x_transformed = mousePos.x * resolution + origin_offset_x;
+//     const y_transformed = (canvas.height - mousePos.y) * resolution + origin_offset_y;
+//     const [x_original, y_original] = transformedToOriginal(x_transformed, y_transformed);
+//     return new Point(x_original, y_original);
+// }
 
-canvas.addEventListener('mousemove', debounce(function(evt) {
+canvas.addEventListener('mousedown', function(evt) {
     mousePos = getMousePos(canvas, evt);
-    let rvizPos = getRvizPoint(mousePos);
-    let message = "(" + rvizPos.x + ", " + rvizPos.y + ")";
-	//log(message);
 
-    if (translateWaypointFlag) {
-        savedWaypoints.setWaypointPosition(selectedWaypointIndex.current, mousePos.x, mousePos.y);
-        updateScene();
+    if (croppingMode) {
+        // Start cropping
+        cropStartX = mousePos.x;
+        cropStartY = mousePos.y;
+        cropping = true;
+    } else {
+        // Existing waypoint and edge interactions
+        isMouseDown = true;
+        //let rvizPoint = getRvizPoint(mousePos);
+
+        let hits = savedWaypoints.hit(mousePos);
+        if (hits.length > 0) {
+            if (selectedWaypointIndexForEdge === null) {
+                selectedWaypointIndexForEdge = hits[0];
+            } else {
+                savedWaypoints.addEdge(selectedWaypointIndexForEdge, hits[0]);
+                selectedWaypointIndexForEdge = null;
+                updateScene();
+            }
+            selectedWaypointIndex.current = hits[0];
+            checkMouseHold();
+        } else {
+            if (selectedWaypointIndex.current != null) {
+                selectedWaypointIndex.current = null;
+            } else {
+                addWaypointFlag = true;
+            }
+        }
     }
-}, 10), false);
+}, false);
+
+canvas.addEventListener('mousemove', function(evt) {
+    if (croppingMode && cropping) {
+        mousePos = getMousePos(canvas, evt);
+        cropEndX = mousePos.x;
+        cropEndY = mousePos.y;
+        updateScene();
+    } else {
+        // Existing waypoint movement logic
+        mousePos = getMousePos(canvas, evt);
+        //let rvizPos = getRvizPoint(mousePos);
+
+        if (translateWaypointFlag) {
+            savedWaypoints.setWaypointPosition(selectedWaypointIndex.current, mousePos.x, mousePos.y);
+            updateScene();
+        }
+    }
+}, false);
+
+canvas.addEventListener('mouseup', function(evt) {
+    if (croppingMode) {
+        if (cropping) {
+            cropping = false;
+        }
+    } else {
+        // Existing logic for adding waypoints and stopping translation
+        if (isMouseDown && imageData != null) {
+            if (addWaypointFlag) {
+                savedWaypoints.push(new Pose(mousePos));
+                updateScene();
+                addWaypointFlag = false;
+            } else if (translateWaypointFlag) {
+                translateWaypointFlag = false;
+            }
+        }
+        isMouseDown = false;
+    }
+}, false);
 
 let isMouseDown = false;
 let addWaypointFlag = false;
 let translateWaypointFlag = false;
 
 let selectedWaypointIndexForEdge = null;
-
-canvas.addEventListener('mousedown', function(evt) {
-    isMouseDown = true;
-    let rvizPoint = getRvizPoint(mousePos);
-
-    let hits = savedWaypoints.hit(mousePos);
-    if (hits.length > 0) {
-        log(hits);
-        if (selectedWaypointIndexForEdge === null) {
-            selectedWaypointIndexForEdge = hits[0];
-        } else {
-            savedWaypoints.addEdge(selectedWaypointIndexForEdge, hits[0]);
-            selectedWaypointIndexForEdge = null;
-            updateScene();
-        }
-        selectedWaypointIndex.current = hits[0];
-        checkMouseHold();
-    } else {
-        if (selectedWaypointIndex.current != null) {
-            selectedWaypointIndex.current = null;
-        } else {
-            addWaypointFlag = true;
-        }
-    }
-
-}, false);
-
-canvas.addEventListener('mouseup', function(evt) {
-    if (isMouseDown && imageData != null) {
-        if (addWaypointFlag) {
-            savedWaypoints.push(new Pose(mousePos));
-            updateScene();
-            addWaypointFlag = false;
-        } else if (translateWaypointFlag) {
-            translateWaypointFlag = false;
-        }
-    }
-    isMouseDown = false;
-}, false);
 
 let holdTime = 0;
 const editTriggerTime = 500; //hold mouse down for --ms to trigger
@@ -278,8 +357,7 @@ function updateCanvas() {
 }
 document.getElementById("input").addEventListener("change", updateCanvas, false);
 
-let importedPoints = [
-];
+let importedPoints = [];
 
 function start() {
     for (let i = 0; i < importedPoints.length; i++) {
@@ -309,5 +387,60 @@ function editSelectedWaypoint() {
             savedWaypoints.waypoints[selectedWaypointIndex.current].label = label;
             updateScene();
         }
+    }
+}
+
+function toggleCroppingMode() {
+    croppingMode = !croppingMode;
+    if (croppingMode) {
+        console.log("Cropping mode enabled");
+    } else {
+        console.log("Cropping mode disabled");
+    }
+}
+
+function applyCrop() {
+    // Ensure we have a valid cropping area
+    const actualCropStartX = Math.min(cropStartX, cropEndX);
+    const actualCropStartY = Math.min(cropStartY, cropEndY);
+    const cropWidth = Math.abs(cropEndX - cropStartX);
+    const cropHeight = Math.abs(cropEndY - cropStartY);
+
+    if (cropWidth > 0 && cropHeight > 0) {
+        console.log(`Cropping area: Start (${actualCropStartX}, ${actualCropStartY}) - Width: ${cropWidth}, Height: ${cropHeight}`);
+
+        // Get cropped image data using the correct coordinates
+        const croppedImageData = ctx.getImageData(actualCropStartX, actualCropStartY, cropWidth, cropHeight);
+
+        // Rescale waypoints according to the cropped area
+        savedWaypoints.waypoints.forEach(waypoint => {
+            waypoint.position.x -= actualCropStartX;
+            waypoint.position.y -= actualCropStartY;
+        });
+
+        // Resize canvas and place cropped image
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(croppedImageData, 0, 0);  // Draw the cropped image at the origin (0, 0) of the canvas
+
+        console.log("Canvas resized and cropped area applied.");
+
+        // Reset cropping coordinates
+        cropStartX = cropStartY = cropEndX = cropEndY = 0;
+        imageData = croppedImageData;
+        updateScene();
+    } else {
+        console.warn("Invalid crop dimensions. Ensure the cropping area is selected properly.");
+    }
+}
+
+function resetCanvas() {
+    // Reapply the full image to the canvas
+    if (imageData) {
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+        ctx.putImageData(imageData, 0, 0);
+        updateScene();
     }
 }
