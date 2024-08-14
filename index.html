@@ -1,48 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Waypoint Generator</title>
-<style>
-#fixed_point_list {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-}
-#fixed_properties {
-    position: fixed;
-    top: 0;
-    right: 0;
-}
-#point_list {
-    list-style-type: none;
-    text-align: right;
-}
-li {
-    float: left;
-    padding: 0 .25em;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waypoint Generator</title>
+    <style>
+        /* Existing styles */
+        #fixed_point_list {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+        }
+        #fixed_properties {
+            position: fixed;
+            top: 0;
+            right: 0;
+        }
+        #point_list {
+            list-style-type: none;
+            text-align: right;
+        }
+        li {
+            float: left;
+            padding: 0 .25em;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 <body>
-<div><input type="file" id="input"></div>
-<div><input type="text" id="output" readonly></div>
-<canvas id="canvas" width="150" height="150"></canvas>
+    <div>
+        <label for="yamlInput">Upload map.yaml:</label>
+        <input type="file" id="yamlInput" accept=".yaml">
+    </div>
+    <div>
+        <label for="input">Upload map.pgm:</label>
+        <input type="file" id="input">
+    </div>
+    <div><input type="text" id="output" readonly></div>
+    <canvas id="canvas" width="150" height="150"></canvas>
 
-<div id="fixed_point_list">
-    Waypoints:
-    <ul id="point_list"></ul>
-    <button type="button" onclick="exportSavedWaypoints()">Export</button>
-</div>
+    <div id="fixed_point_list">
+        Waypoints:
+        <ul id="point_list"></ul>
+        <button type="button" onclick="exportSavedWaypoints()">Export</button>
+    </div>
 
-<div id="fixed_properties">
-    Currently selected: <span id="property_id">0</span>
-    <div><button type="button" onclick="editSelectedWaypoint()">Edit</button></div>
-    <div><button type="button" onclick="deleteSelectedWaypoint()">Delete</button></div>
-</div>
+    <div id="fixed_properties">
+        Currently selected: <span id="property_id">0</span>
+        <div><button type="button" onclick="editSelectedWaypoint()">Edit</button></div>
+        <div><button type="button" onclick="deleteSelectedWaypoint()">Delete</button></div>
+    </div>
 
-<script src="js/classes.js"></script>
-<script src="js/main.js"></script>
+    <button type="button" onclick="toggleCroppingMode()">Toggle Cropping Mode</button>
+    <button type="button" onclick="applyCrop()">Crop Image</button>
+    <button type="button" onclick="resetCanvas()">Reset Canvas</button>
+
+    <script src="js/classes.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
