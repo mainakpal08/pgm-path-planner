@@ -9,12 +9,18 @@ class Point {
     }
 
     static toRvizPoint(point) {
-		const x_t = point.x * resolution + origin_offset_x;
-		const y_t = (canvas.height - point.y) * resolution + origin_offset_y;
-		const [x_original, y_original] = transformedToOriginal(x_t, y_t);
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var pixelX = point.x * scaleX;
+        var pixelY = (rect.height - point.y) * scaleY;
+
+        var rvizX = origin_offset_x + pixelX * resolution;
+        var rvizY = origin_offset_y + pixelY * resolution;
+
         let rvizPoint = new Point();
-        rvizPoint.x = x_original //point.x * resolution + origin_offset_x;
-        rvizPoint.y = y_original //(canvas.height - point.y) * resolution + origin_offset_y;
+        rvizPoint.x = rvizX;
+        rvizPoint.y = rvizY;
         return rvizPoint;
     }
 
@@ -76,44 +82,42 @@ class Waypoints {
     }
 
     removeWaypoint(index) {
-		this.waypoints.splice(index, 1);
-		// Update edges to point to the correct waypoints after deletion
-		this.edges = this.edges
-			.filter(edge => edge[0] !== index && edge[1] !== index)
-			.map(edge => {
-				return [
-					edge[0] > index ? edge[0] - 1 : edge[0],
-					edge[1] > index ? edge[1] - 1 : edge[1]
-				];
-			});
-	}
-	
+        this.waypoints.splice(index, 1);
+        // Update edges to point to the correct waypoints after deletion
+        this.edges = this.edges
+            .filter(edge => edge[0] !== index && edge[1] !== index)
+            .map(edge => {
+                return [
+                    edge[0] > index ? edge[0] - 1 : edge[0],
+                    edge[1] > index ? edge[1] - 1 : edge[1]
+                ];
+            });
+    }
 
     exportToRvizWaypoints() {
-		let rvizWaypoints = [];
-		for (let i = 0; i < this.waypoints.length; i++) {
-			let pose = new Pose();
-			pose.position = Point.toRvizPoint(this.waypoints[i].position);
-			pose.orientation = this.waypoints[i].orientation;
-			pose.label = this.waypoints[i].label; // Include label in export
-			rvizWaypoints[i] = pose;
-		}
-	
-		let rvizEdges = [];
-		for (let i = 0; i < this.edges.length; i++) {
-			let edge = {
-				start: this.edges[i][0],
-				end: this.edges[i][1]
-			};
-			rvizEdges.push(edge);
-		}
-	
-		return {
-			waypoints: rvizWaypoints,
-			edges: rvizEdges
-		};
-	}
-	
+        let rvizWaypoints = [];
+        for (let i = 0; i < this.waypoints.length; i++) {
+            let pose = new Pose();
+            pose.position = Point.toRvizPoint(this.waypoints[i].position);
+            pose.orientation = this.waypoints[i].orientation;
+            pose.label = this.waypoints[i].label; // Include label in export
+            rvizWaypoints[i] = pose;
+        }
+
+        let rvizEdges = [];
+        for (let i = 0; i < this.edges.length; i++) {
+            let edge = {
+                start: this.edges[i][0],
+                end: this.edges[i][1]
+            };
+            rvizEdges.push(edge);
+        }
+
+        return {
+            waypoints: rvizWaypoints,
+            edges: rvizEdges
+        };
+    }
 
     hit(mousePos) {
         let hits = [];
@@ -128,42 +132,42 @@ class Waypoints {
 
     addEdge(startIndex, endIndex) {
         this.edges.push([startIndex, endIndex]);
+        this.edges.push([endIndex, startIndex]); // Add the reverse edge to make it bidirectional
     }
 
     draw() {
-		// Draw edges
-		ctx.strokeStyle = "#0000FF"; // Set edge color
-		ctx.lineWidth = 2;
-		for (let i = 0; i < this.edges.length; i++) {
-			let start = this.waypoints[this.edges[i][0]]?.position;
-			let end = this.waypoints[this.edges[i][1]]?.position;
-			if (start && end) {
-				ctx.beginPath();
-				ctx.moveTo(start.x, start.y);
-				ctx.lineTo(end.x, end.y);
-				ctx.stroke();
-			}
-		}
-	
-		// Draw points
-		ctx.fillStyle = "#000000";
-		ctx.beginPath();
-		for (let i = 0; i < this.waypoints.length; i++) {
-			ctx.moveTo(this.waypoints[i].position.x + this.radius, this.waypoints[i].position.y);
-			ctx.arc(this.waypoints[i].position.x, this.waypoints[i].position.y, this.radius, 0, Math.PI * 2, true);
-		}
-		ctx.fill();
-	
-		// Draw indices
-		ctx.font = "10px Arial"; // Adjust font size and style
-		for (let i = 0; i < this.waypoints.length; i++) {
-			ctx.fillStyle = "#FFFFFF"; // Set text color to white for index
-			ctx.fillText(i, this.waypoints[i].position.x - 4, this.waypoints[i].position.y + 3);
-			if (this.waypoints[i].label) {
-				ctx.fillStyle = "#FF0000"; // Set text color to red for annotation
-				ctx.fillText(this.waypoints[i].label, this.waypoints[i].position.x + 10, this.waypoints[i].position.y + 10); // Adjust position for label visibility
-			}
-		}
-	}
-	
+        // Draw edges
+        ctx.strokeStyle = "#0000FF"; // Set edge color
+        ctx.lineWidth = 2;
+        for (let i = 0; i < this.edges.length; i++) {
+            let start = this.waypoints[this.edges[i][0]]?.position;
+            let end = this.waypoints[this.edges[i][1]]?.position;
+            if (start && end) {
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+            }
+        }
+
+        // Draw points
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        for (let i = 0; i < this.waypoints.length; i++) {
+            ctx.moveTo(this.waypoints[i].position.x + this.radius, this.waypoints[i].position.y);
+            ctx.arc(this.waypoints[i].position.x, this.waypoints[i].position.y, this.radius, 0, Math.PI * 2, true);
+        }
+        ctx.fill();
+
+        // Draw indices and labels
+        ctx.font = "10px Arial"; // Adjust font size and style
+        for (let i = 0; i < this.waypoints.length; i++) {
+            ctx.fillStyle = "#FFFFFF"; // Set text color to white for index
+            ctx.fillText(i, this.waypoints[i].position.x - 4, this.waypoints[i].position.y + 3);
+            if (this.waypoints[i].label) {
+                ctx.fillStyle = "#FF0000"; // Set text color to red for annotation
+                ctx.fillText(this.waypoints[i].label, this.waypoints[i].position.x + 10, this.waypoints[i].position.y + 10); // Adjust position for label visibility
+            }
+        }
+    }
 }
